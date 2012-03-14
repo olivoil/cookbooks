@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Tmux launcher
+#
+# Modified version of a script orginally found at:
+#     http://github.com/brandur/tmux-extra
+#     http://forums.gentoo.org/viewtopic-t-836006-start-0.html
+
+main() {
+  validate_base_session
+  delegate_to_tmux ls
+  launch_session
+}
+
+trim() { echo $1; }
+
+abort() {
+  echo $1 >&2
+  exit 1
+}
+
+validate_base_session() {
+  if [[ -z "$base_session" ]]; then
+    abort "Specify session name as the first argument"
+  fi
+}
+
+delegate_to_tmux() {
+  for command in $@; do
+    if [[ "$base_session" == "$command" ]]; then
+      tmux $command
+      exit
+    fi
+  done
+}
+
+launch_session() {
+  base_session_nb=$(trim `tmux ls | grep "^$base_session" | wc -l`)
+
+  if [[ "$base_session_nb" == "0" ]]; then
+    launch_new_session
+  else
+    launch_linked_session
+  fi
+}
+
+launch_new_session() {
+  echo "Launching tmux base session $base_session ..."
+  tmux new-session -s $base_session
+}
+
+launch_linked_session() {
+  if [[ -z "$TMUX" ]]; then
+    clean_linked_sessions
+
+    echo "Launching copy of base session $base_session ..."
+    uniq_id=`date +%Y%m%d%H%M%S`
+    session_id="${base_session} ${uniq_id}"
+
+    tmux new-session -d -t "$base_session" -s "$session_id"
+    tmux attach-session -t "$session_id"
+    tmux kill-session -t "$session_id"
+  else
+    abort 'You are already in a tmux session. Detach first (prefix d)'
+  fi
+}
+
+clean_linked_sessions() {
+  old_sessions=$(tmux ls 2>/dev/null | egrep "^.*[0-9]{14}.*[0-9]+\)$" | cut -f 1 -d:)
+  for old_session_id in $old_sessions; do
+    echo 'killing session $old_session_id'
+    tmux kill-session -t $old_session_id
+  done
+}
+
+base_session="$1"
+main
