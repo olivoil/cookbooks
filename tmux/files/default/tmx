@@ -66,9 +66,10 @@ launch_linked_session() {
 }
 
 clean_linked_sessions() {
-  old_sessions=$(tmux ls 2>/dev/null | egrep "^.*[0-9]{14}.*[0-9]+\)$" | cut -f 1 -d:)
+  old_sessions_pattern = "${base_session}\s+[0-9]{14}\:"
+  old_sessions=$(tmux ls 2>/dev/null | egrep $old_session_pattern | cut -d':' -f1)
   for old_session_id in $old_sessions; do
-    echo 'killing session $old_session_id'
+    echo "killing session $old_session_id"
     tmux kill-session -t $old_session_id
   done
 }
