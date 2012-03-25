@@ -55,7 +55,7 @@ launch_linked_session() {
 
     echo "Launching copy of base session $base_session ..."
     uniq_id=`date +%Y%m%d%H%M%S`
-    session_id="${base_session} ${uniq_id}"
+    session_id="${base_session}_${uniq_id}"
 
     tmux new-session -d -t "$base_session" -s "$session_id"
     tmux attach-session -t "$session_id"
@@ -66,11 +66,11 @@ launch_linked_session() {
 }
 
 clean_linked_sessions() {
-  old_sessions_pattern = "${base_session}\s+[0-9]{14}\:"
-  old_sessions=$(tmux ls 2>/dev/null | egrep $old_session_pattern | cut -d':' -f1)
+  old_sessions_pattern="${base_session}_[0-9]{14}\:"
+  old_sessions=$(tmux ls 2>/dev/null | egrep "$old_sessions_pattern" | cut -d':' -f1)
   for old_session_id in $old_sessions; do
-    echo "killing session $old_session_id"
-    tmux kill-session -t $old_session_id
+    echo killing session "$old_session_id"
+    tmux kill-session -t "$old_session_id"
   done
 }
 
