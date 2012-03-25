@@ -23,19 +23,20 @@
 
 node['etc']['passwd'].each do |user, data|
   # only do this for non-system users
-  if data['uid'].to_i >= 1000 and user != 'nobody'
-
+  if data['uid'].to_i >= 1000
     home_dir = data['home'] || data['dir'] || "/home/#{data['id']}"
 
-    cookbook_file "#{home_dir}/.dotfiles/tmux.conf" do
-      source "tmux.conf"
-      owner user
-      group data['gid']
-      mode 0644
-    end
+    if File.directory? home_dir
+      cookbook_file "#{home_dir}/.dotfiles/tmux.conf" do
+        source "tmux.conf"
+        owner user
+        group data['gid']
+        mode 0644
+      end
 
-    link "#{home_dir}/.tmux.conf" do
-      to "#{home_dir}/.dotfiles/tmux.conf"
+      link "#{home_dir}/.tmux.conf" do
+        to "#{home_dir}/.dotfiles/tmux.conf"
+      end
     end
   end
 end
